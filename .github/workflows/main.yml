@@ -1,0 +1,38 @@
+name: Build SpFFT with ROCm
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y cmake g++ hipcc libamdhip64-dev rocfft-dev
+
+      - name: Configure build
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. -DSPFFT_GPU_BACKEND=ROCM
+
+      - name: Compile
+        run: |
+          cd build
+          make -j$(nproc)
+
+      - name: Run tests
+        run: |
+          cd build
+          ctest --output-on-failure
